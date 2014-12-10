@@ -2,7 +2,14 @@
 'use strict';
 require('es6-promise').polyfill();
 require('isomorphic-fetch');
-var argv = require('minimist')(process.argv.slice(2));
+var util = require('util');
+var platform = process.env.JENKINS_URL ? 'jenkins': 'localhost';
+var Graphite = require('../lib/graphite/client');
+
+var graphite = new Graphite({
+	apiKey: process.env.HOSTEDGRAPHITE_APIKEY,
+        prefix: util.format('.%s.%s.', platform, 'next-deploys')
+});
 
 var Heroku = require('heroku-client');
 var heroku = new Heroku({ token: process.env.HEROKU_AUTH_TOKEN });
@@ -29,12 +36,14 @@ heroku.apps().list()
 					.then(function(results) {
 						return { name: app.name, version: results[0].version };
 					});
-			}))
+			}));
 	})
 	.then(function(apps) {
-		console.log(apps.reduce(function(count, app) {
+		var count = apps.reduce(function(count, app) {
 			return app.version + count;
-		}, 0) + ' total deploys');
+		}, 0);
+		graphite.log(count);
+		console.log(count + ' total deploys');
 	})
 	.catch(function(err) {
 		console.log(err);
