@@ -14,7 +14,7 @@ var graphite = new Graphite({
 var Heroku = require('heroku-client');
 var heroku = new Heroku({ token: process.env.HEROKU_AUTH_TOKEN });
 
-heroku.apps().list()
+heroku.organizations('financial-times').apps().listForOrganization()
 	.then(function(apps) {
 		return apps.filter(function(app) {
 			return /^(?:ft-)?next-/.test(app.name);
@@ -31,6 +31,9 @@ heroku.apps().list()
 					}
 				})
 					.then(function(result) {
+						if (result.status >= 400 && result.status < 600) {
+							throw new Error("Got back response from server for " + app.name, result);
+						}
 						return result.json();
 					})
 					.then(function(results) {
@@ -47,4 +50,5 @@ heroku.apps().list()
 	})
 	.catch(function(err) {
 		console.log(err);
+		process.exit(1);
 	});
