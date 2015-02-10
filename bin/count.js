@@ -18,6 +18,8 @@ heroku.organizations('financial-times').apps().listForOrganization()
 	.then(function(apps) {
 		return apps.filter(function(app) {
 			return /^(?:ft-)?next-/.test(app.name);
+		}).filter(function(app) {
+			return !/(?:ft-)?next-pr/.test(app.name);
 		});
 	})
 	.then(function(apps) {
